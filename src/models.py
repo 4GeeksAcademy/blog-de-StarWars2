@@ -4,8 +4,6 @@ from sqlalchemy import UniqueConstraint, Enum
 
 db = SQLAlchemy()
 
-# ---- Tablas del Blog StarWars ----
-
 class User(db.Model):
     __tablename__ = "user"
     id = db.Column(db.Integer, primary_key=True)
@@ -65,8 +63,6 @@ class Comment(db.Model):
     author = db.relationship("User", back_populates="comments")
     post   = db.relationship("Post", back_populates="comments")
 
-# ---- Diagrama (no tocar) ----
-# Si tu plantilla incluye render_er, déjalo así:
 try:
     from eralchemy2 import render_er
     render_er(db.Model, "diagram.png")

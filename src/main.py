@@ -1,7 +1,7 @@
 import os
 from flask import Flask
 from flask_migrate import Migrate
-from .models import db  # importa tus modelos
+from .models import db
 
 def create_app():
     app = Flask(__name__)
