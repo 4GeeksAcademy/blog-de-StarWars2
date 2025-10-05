@@ -4,6 +4,7 @@ from sqlalchemy import UniqueConstraint, Enum
 
 db = SQLAlchemy()
 
+
 class User(db.Model):
     __tablename__ = "user"
     id = db.Column(db.Integer, primary_key=True)
@@ -12,8 +13,13 @@ class User(db.Model):
     password = db.Column(db.String(128), nullable=False)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
 
-    posts = db.relationship("Post", back_populates="author", cascade="all, delete-orphan")
-    comments = db.relationship("Comment", back_populates="author", cascade="all, delete-orphan")
+    posts = db.relationship(
+        "Post", back_populates="author", cascade="all, delete-orphan")
+    comments = db.relationship(
+        "Comment", back_populates="author", cascade="all, delete-orphan")
+    favorites = db.relationship(
+        "Favorite", back_populates="user", cascade="all, delete-orphan")
+
 
 class Follower(db.Model):
     """
@@ -21,47 +27,93 @@ class Follower(db.Model):
     """
     __tablename__ = "follower"
     id = db.Column(db.Integer, primary_key=True)
-    user_from_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    user_to_id   = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    user_from_id = db.Column(
+        db.Integer, db.ForeignKey("user.id"), nullable=False)
+    user_to_id = db.Column(
+        db.Integer, db.ForeignKey("user.id"), nullable=False)
 
-    __table_args__ = (UniqueConstraint("user_from_id", "user_to_id", name="uq_follow_pair"),)
+    __table_args__ = (UniqueConstraint(
+        "user_from_id", "user_to_id", name="uq_follow_pair"),)
 
     user_from = db.relationship("User", foreign_keys=[user_from_id])
-    user_to   = db.relationship("User", foreign_keys=[user_to_id])
+    user_to = db.relationship("User", foreign_keys=[user_to_id])
+
+
+class Planet(db.Model):
+    __tablename__ = "planet"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    climate = db.Column(db.String(100))
+    population = db.Column(db.Integer)
+    terrain = db.Column(db.String(100))
+    favorites = db.relationship(
+        "Favorite", back_populates="planet", cascade="all, delete-orphan")
+
+
+class Character(db.Model):
+    __tablename__ = "character"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    gender = db.Column(db.String(50))
+    species = db.Column(db.String(50))
+    birth_year = db.Column(db.String(20))
+    favorites = db.relationship(
+        "Favorite", back_populates="character", cascade="all, delete-orphan")
+
+
+class Favorite(db.Model):
+    __tablename__ = "favorite"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    planet_id = db.Column(
+        db.Integer, db.ForeignKey("planet.id"), nullable=True)
+    character_id = db.Column(
+        db.Integer, db.ForeignKey("character.id"), nullable=True)
+
+    user = db.relationship("User", back_populates="favorites")
+    planet = db.relationship("Planet", back_populates="favorites")
+    character = db.relationship("Character", back_populates="favorites")
+
 
 class Post(db.Model):
     __tablename__ = "post"
     id = db.Column(db.Integer, primary_key=True)
     author_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     title = db.Column(db.String(140), nullable=True)
-    body  = db.Column(db.Text, nullable=True)
+    body = db.Column(db.Text, nullable=True)
 
     author = db.relationship("User", back_populates="posts")
-    media  = db.relationship("Media", back_populates="post", cascade="all, delete-orphan")
-    comments = db.relationship("Comment", back_populates="post", cascade="all, delete-orphan")
+    media = db.relationship("Media", back_populates="post",
+                            cascade="all, delete-orphan")
+    comments = db.relationship(
+        "Comment", back_populates="post", cascade="all, delete-orphan")
+
 
 class MediaType(enum.Enum):
     image = "image"
     video = "video"
 
+
 class Media(db.Model):
     __tablename__ = "media"
     id = db.Column(db.Integer, primary_key=True)
     type = db.Column(Enum(MediaType), nullable=False)
-    url  = db.Column(db.String(255), nullable=False)
+    url = db.Column(db.String(255), nullable=False)
     post_id = db.Column(db.Integer, db.ForeignKey("post.id"), nullable=False)
 
     post = db.relationship("Post", back_populates="media")
+
 
 class Comment(db.Model):
     __tablename__ = "comment"
     id = db.Column(db.Integer, primary_key=True)
     body = db.Column(db.Text, nullable=False)
     author_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    post_id   = db.Column(db.Integer, db.ForeignKey("post.id"), nullable=False)
+    post_id = db.Column(db.Integer, db.ForeignKey("post.id"), nullable=False)
 
     author = db.relationship("User", back_populates="comments")
-    post   = db.relationship("Post", back_populates="comments")
+    post = db.relationship("Post", back_populates="comments")
+
 
 try:
     from eralchemy2 import render_er
